@@ -2,55 +2,68 @@ package com.project;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 
 public class WeatherAppGui extends JFrame {
     public WeatherAppGui() {
         super("Weather App");
 
-        // ปิดโปรแกรมเมื่อกดปิด
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-
-        // ตั้งค่าขนาด GUI เป็นแนวนอน
-        setSize(800, 450); // Landscape mode
-
-        // โหลด GUI ไว้ที่กึ่งกลางหน้าจอ
+        setSize(800, 450);
         setLocationRelativeTo(null);
-
-        // ใช้ BorderLayout เพื่อจัดให้อยู่ตรงกลาง
         setLayout(new BorderLayout());
-
-        // ป้องกันการ Resize
         setResizable(false);
 
         addGuiComponents();
     }
 
     private void addGuiComponents() {
-        // สร้าง JPanel หลักที่เป็นกล่อง
         JPanel boxPanel = new JPanel();
-        boxPanel.setPreferredSize(new Dimension(600, 300)); // กำหนดขนาดกล่อง
-        boxPanel.setBackground(Color.LIGHT_GRAY); // ตั้งค่าสีของกล่อง
-        boxPanel.setLayout(null); // กำหนด Layout เป็น null เพื่อใช้ setBounds
+        boxPanel.setPreferredSize(new Dimension(600, 300));
+        boxPanel.setBackground(Color.LIGHT_GRAY);
+        boxPanel.setLayout(null);
 
-        // สร้าง JTextField สำหรับค้นหาสถานที่ (ย้ายไปฝั่งขวา)
+        //ใช้ BufferedImage เพื่อรองรับความโปร่งใส
+        String imagePath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/cloudy.png";
+        ImageIcon icon = loadTransparentImage(imagePath, 150, 150);
+
+        //แสดงรูปภาพที่ฝั่งซ้าย
+        JLabel weatherConditionImage = new JLabel(icon);
+        weatherConditionImage.setBounds(100, 100, 150, 150);
+        weatherConditionImage.setOpaque(false); // ✅ ทำให้ JLabel ไม่มีพื้นหลัง
+        boxPanel.add(weatherConditionImage);
+
+        //เพิ่ม JTextField
         JTextField searchTextField = new JTextField();
-        searchTextField.setBounds(380, 15, 250, 45); // จัดตำแหน่งไปฝั่งขวา
+        searchTextField.setBounds(380, 15, 250, 45);
         searchTextField.setFont(new Font("Dialog", Font.PLAIN, 14));
-
-        // สร้างปุ่มแว่นขยาย 🔍
-        JButton searchButton = new JButton("🔍");
-        searchButton.setBounds(640, 15, 50, 45); // ปุ่มอยู่ขวาของกล่องค้นหา
-        searchButton.setFont(new Font("Dialog", Font.PLAIN, 18));
-        searchButton.setFocusPainted(false); // เอาเส้นโฟกัสออก
-        searchButton.setBackground(Color.WHITE); // ตั้งค่าพื้นหลังปุ่ม
-        searchButton.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1)); // เพิ่มเส้นขอบ
-
-        // ✅ เพิ่ม JTextField และปุ่มลงใน JPanel
         boxPanel.add(searchTextField);
+
+        //เพิ่มปุ่มแว่นขยาย 
+        JButton searchButton = new JButton("🔍");
+        searchButton.setBounds(640, 15, 50, 45);
+        searchButton.setFont(new Font("Dialog", Font.PLAIN, 18));
+        searchButton.setFocusPainted(false);
+        searchButton.setBackground(Color.WHITE);
+        searchButton.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         boxPanel.add(searchButton);
 
-        // ✅ เพิ่ม JPanel ลงใน JFrame
         add(boxPanel, BorderLayout.CENTER);
+    }
+
+    /**โหลดรูปและปรับขนาด พร้อมรองรับพื้นหลังโปร่งใส**/
+    private ImageIcon loadTransparentImage(String path, int width, int height) {
+        try {
+            BufferedImage img = ImageIO.read(new File(path));
+            Image scaledImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            return new ImageIcon(scaledImg);
+        } catch (IOException e) {
+            System.out.println("❌ ไม่พบไฟล์รูปภาพที่: " + path);
+            return null;
+        }
     }
 
     public static void main(String[] args) {
