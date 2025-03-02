@@ -8,10 +8,15 @@ import java.io.File;
 import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import com.project.models.WeatherInfo;
+
 
 public class WeatherAppGui extends JFrame {
-    private JLabel locationLabel; //ตัวแปรสำหรับแสดงชื่อเมือง
-    private JLabel weatherInfoLabel; //ตัวแปรสำหรับแสดงอุณหภูมิและสภาพอากาศ
+    private JLabel locationLabel;
+    private JLabel weatherInfoLabel;
+    private JLabel weatherConditionImage;
+    private JTextField searchTextField;
+    private JButton searchButton;
 
     public WeatherAppGui() {
         super("Weather App");
@@ -31,67 +36,59 @@ public class WeatherAppGui extends JFrame {
         boxPanel.setBackground(Color.LIGHT_GRAY);
         boxPanel.setLayout(null);
 
-        //โหลดรูปเมฆ
-        String imagePath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/cloudy.png";
-        ImageIcon icon = loadTransparentImage(imagePath, 150, 150);
+        // โหลดรูปเมฆเริ่มต้น
+        String defaultImagePath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/cloudy.png";
+        ImageIcon defaultIcon = loadTransparentImage(defaultImagePath, 150, 150);
 
-        //แสดงรูปภาพที่ฝั่งซ้าย
-        JLabel weatherConditionImage = new JLabel(icon);
+        // แสดงรูปภาพสภาพอากาศ
+        weatherConditionImage = new JLabel(defaultIcon);
         weatherConditionImage.setBounds(100, 80, 150, 150);
-        weatherConditionImage.setOpaque(false);
         boxPanel.add(weatherConditionImage);
 
-        //เพิ่ม JLabel สำหรับแสดงชื่อเมือง (อยู่เหนือรูปภาพ)
+        // เพิ่ม JLabel สำหรับแสดงชื่อเมือง
         locationLabel = new JLabel("Enter a city name", SwingConstants.CENTER);
         locationLabel.setBounds(50, 40, 250, 30);
         locationLabel.setFont(new Font("Tahoma", Font.BOLD, 20));
         locationLabel.setForeground(Color.BLACK);
         boxPanel.add(locationLabel);
 
-        //เพิ่ม JLabel สำหรับแสดงอุณหภูมิและสภาพอากาศ (อยู่ใต้รูปภาพ)
-        weatherInfoLabel = new JLabel("25°C | Cloudy", SwingConstants.CENTER);
-        weatherInfoLabel.setBounds(100, 240, 150, 30); // ✅ จัดให้อยู่ตรงกลางใต้รูป
+        // เพิ่ม JLabel สำหรับแสดงข้อมูลอากาศ
+        weatherInfoLabel = new JLabel("---", SwingConstants.CENTER);
+        weatherInfoLabel.setBounds(100, 240, 150, 30);
         weatherInfoLabel.setFont(new Font("Tahoma", Font.BOLD, 18));
         weatherInfoLabel.setForeground(Color.BLACK);
-        boxPanel.add(weatherInfoLabel); // ✅ ไม่มีกรอบหรือพื้นหลัง
+        boxPanel.add(weatherInfoLabel);
 
-        //เพิ่ม JTextField สำหรับพิมพ์ชื่อเมือง
-        JTextField searchTextField = new JTextField();
+        // เพิ่ม JTextField สำหรับพิมพ์ชื่อเมือง
+        searchTextField = new JTextField();
         searchTextField.setBounds(380, 15, 250, 45);
         searchTextField.setFont(new Font("Arial", Font.PLAIN, 14));
         boxPanel.add(searchTextField);
 
-        //โหลดรูปแว่นขยาย
+        // โหลดรูปแว่นขยาย
         String searchIconPath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/search.png";
         ImageIcon searchIcon = loadTransparentImage(searchIconPath, 30, 30);
 
-        //ปุ่มค้นหา 
-        JButton searchButton = new JButton(searchIcon);
+        // ปุ่มค้นหา
+        searchButton = new JButton(searchIcon);
         searchButton.setBounds(640, 15, 50, 45);
         searchButton.setFocusPainted(false);
         searchButton.setBackground(Color.WHITE);
         searchButton.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         boxPanel.add(searchButton);
 
-        //แล้วอัปเดตชื่อเมืองและอุณหภูมิ
+        // Event Listener ปุ่มค้นหา
         searchButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String location = searchTextField.getText();
-                if (!location.trim().isEmpty()) {
-                    locationLabel.setText(location);
-                    weatherInfoLabel.setText("25°C | Cloudy"); //สามารถเปลี่ยนได้ตาม API จริง
-                } else {
-                    locationLabel.setText("Enter a city name");
-                    weatherInfoLabel.setText("---");
-                }
+                fetchWeatherData();
             }
         });
 
         add(boxPanel, BorderLayout.CENTER);
     }
 
-    /**โหลดรูปและปรับขนาด พร้อมรองรับพื้นหลังโปร่งใส **/
+    /** โหลดรูปและปรับขนาด พร้อมรองรับพื้นหลังโปร่งใส **/
     private ImageIcon loadTransparentImage(String path, int width, int height) {
         try {
             BufferedImage img = ImageIO.read(new File(path));
@@ -101,6 +98,47 @@ public class WeatherAppGui extends JFrame {
             System.out.println("❌ Image not found at: " + path);
             return null;
         }
+    }
+
+    /** ดึงข้อมูลอากาศจาก API และอัปเดต GUI **/
+    private void fetchWeatherData() {
+        String location = searchTextField.getText().trim();
+        if (location.isEmpty()) {
+            locationLabel.setText("Enter a city name");
+            weatherInfoLabel.setText("---");
+            return;
+        }
+
+        try {
+            WeatherInfo weatherData = WeatherService.getWeatherData(location);
+            locationLabel.setText(weatherData.getCity());
+            weatherInfoLabel.setText(String.format("%.1f°C | %s", weatherData.getTemperature(), weatherData.getWeatherCondition()));
+
+            // เปลี่ยนรูปสภาพอากาศตามข้อมูลจริง
+            updateWeatherIcon(weatherData.getWeatherCondition());
+        } catch (Exception e) {
+            locationLabel.setText("City not found");
+            weatherInfoLabel.setText("---");
+            System.out.println("❌ Error fetching weather data: " + e.getMessage());
+        }
+    }
+
+    /** อัปเดตรูปสภาพอากาศ **/
+    private void updateWeatherIcon(String weatherCondition) {
+        String basePath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/";
+        String imagePath = basePath + "cloudy.png"; // ค่าเริ่มต้น
+
+        if (weatherCondition.equalsIgnoreCase("Clear")) {
+            imagePath = basePath + "clear.png";
+        } else if (weatherCondition.equalsIgnoreCase("Cloudy")) {
+            imagePath = basePath + "cloudy.png";
+        } else if (weatherCondition.equalsIgnoreCase("Rain")) {
+            imagePath = basePath + "rain.png";
+        } else if (weatherCondition.equalsIgnoreCase("Snow")) {
+            imagePath = basePath + "snow.png";
+        }
+
+        weatherConditionImage.setIcon(loadTransparentImage(imagePath, 150, 150));
     }
 
     public static void main(String[] args) {
