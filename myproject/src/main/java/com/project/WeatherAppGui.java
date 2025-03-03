@@ -41,7 +41,7 @@ public class WeatherAppGui extends JFrame {
         boxPanel.setLayout(null);
 
         // โหลดรูปเมฆเริ่มต้น
-        String defaultImagePath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/cloudy.png";
+        String defaultImagePath = "myproject/src/main/assets/weatherapp_images/cloudy.png";
         ImageIcon defaultIcon = loadTransparentImage(defaultImagePath, 150, 150);
 
         // แสดงรูปภาพสภาพอากาศ
@@ -90,11 +90,11 @@ public class WeatherAppGui extends JFrame {
         });
 
         // โหลดรูปภาพสำหรับความชื้น
-        String humidityIconPath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/humidity.png";
+        String humidityIconPath = "myproject/src/main/assets/weatherapp_images/humidity.png";
         ImageIcon humidityIcon = loadTransparentImage(humidityIconPath, 30, 30);
 
         // โหลดรูปภาพสำหรับลม
-        String windIconPath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/wind.png";
+        String windIconPath = "myproject/src/main/assets/weatherapp_images/wind.png";
         ImageIcon windIcon = loadTransparentImage(windIconPath, 30, 30);
 
         humidityIconLabel = new JLabel(humidityIcon);
