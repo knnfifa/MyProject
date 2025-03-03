@@ -9,7 +9,7 @@ import com.project.models.Location;
 
 public class WeatherService {
     private static final String GEO_API = "https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json";
-    private static final String WEATHER_API = "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode";
+    private static final String WEATHER_API = "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode,relativehumidity_2m,windspeed_10m";
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -20,26 +20,34 @@ public class WeatherService {
                 System.err.println("❌ ไม่พบพิกัดของเมือง: " + city);
                 return null;
             }
-
+    
+            // ดึงข้อมูลอากาศจาก API
             String weatherResponse = ApiClient.fetchApiResponse(String.format(WEATHER_API, location.getLatitude(), location.getLongitude()));
             JsonNode weatherData = mapper.readTree(weatherResponse).get("hourly");
-
-
-            if (weatherData == null || !weatherData.has("temperature_2m") || !weatherData.has("weathercode")) {
-                System.err.println("❌ API Response ไม่ถูกต้อง: " + weatherResponse);
-                return null;
-            }
-
+    
             double temperature = weatherData.get("temperature_2m").get(0).asDouble();
             int weatherCode = weatherData.get("weathercode").get(0).asInt();
-            String weatherCondition = convertWeatherCode(weatherCode);
-
-            return new WeatherInfo(city, temperature, weatherCondition);
+            double snowfall = weatherData.has("snowfall") ? weatherData.get("snowfall").get(0).asDouble() : 0;
+            double humidity = weatherData.has("relativehumidity_2m") ? weatherData.get("relativehumidity_2m").get(0).asDouble() : 0;
+            double windSpeed = weatherData.has("windspeed_10m") ? weatherData.get("windspeed_10m").get(0).asDouble() : 0;
+    
+            // ✅ ปรับให้ถ้าอุณหภูมิต่ำกว่า -5°C และเป็น Cloudy ให้แสดง Snow
+            String weatherCondition;
+            if (snowfall > 0) {
+                weatherCondition = "Snow";
+            } else if (temperature <= -5 && convertWeatherCode(weatherCode).equals("Cloudy")) {
+                weatherCondition = "Snow";
+            } else {
+                weatherCondition = convertWeatherCode(weatherCode);
+            }
+    
+            return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed);
         } catch (Exception e) {
             System.err.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
+    
 
     private static Location getCityCoordinates(String city) {
         try {

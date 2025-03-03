@@ -17,6 +17,10 @@ public class WeatherAppGui extends JFrame {
     private JLabel weatherConditionImage;
     private JTextField searchTextField;
     private JButton searchButton;
+    private JLabel humidityIconLabel;
+    private JLabel windIconLabel;
+    private JLabel humidityLabel;
+    private JLabel windSpeedLabel;
 
     public WeatherAppGui() {
         super("Weather App");
@@ -66,7 +70,7 @@ public class WeatherAppGui extends JFrame {
         boxPanel.add(searchTextField);
 
         // โหลดรูปแว่นขยาย
-        String searchIconPath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/search.png";
+        String searchIconPath = "myproject/src/main/assets/weatherapp_images/search.png";
         ImageIcon searchIcon = loadTransparentImage(searchIconPath, 30, 30);
 
         // ปุ่มค้นหา
@@ -85,6 +89,37 @@ public class WeatherAppGui extends JFrame {
             }
         });
 
+        // โหลดรูปภาพสำหรับความชื้น
+        String humidityIconPath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/humidity.png";
+        ImageIcon humidityIcon = loadTransparentImage(humidityIconPath, 30, 30);
+
+        // โหลดรูปภาพสำหรับลม
+        String windIconPath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/wind.png";
+        ImageIcon windIcon = loadTransparentImage(windIconPath, 30, 30);
+
+        humidityIconLabel = new JLabel(humidityIcon);
+        humidityIconLabel.setBounds(50, 310, 30, 30); //ไอคอนความชืน
+        boxPanel.add(humidityIconLabel);
+
+        // สร้าง JLabel สำหรับข้อมูลความชื้น
+        humidityLabel = new JLabel("Humidity: --%", SwingConstants.CENTER);
+        humidityLabel.setBounds(35, 310, 250, 30); //// ข้อความความชื้น 
+        humidityLabel.setFont(new Font("Tahoma", Font.BOLD, 16));
+        humidityLabel.setForeground(Color.BLACK);
+        boxPanel.add(humidityLabel);
+
+        // สร้าง JLabel สำหรับไอคอนลม
+        windIconLabel = new JLabel(windIcon);
+        windIconLabel.setBounds(50, 360, 30, 30); // ไอคอนลม
+        boxPanel.add(windIconLabel);
+
+        // สร้าง JLabel สำหรับข้อมูลความเร็วลม
+        windSpeedLabel = new JLabel("Wind Speed: -- km/h", SwingConstants.CENTER);
+        windSpeedLabel.setBounds(65, 360, 250, 30);  //ข้อความลม
+        windSpeedLabel.setFont(new Font("Tahoma", Font.BOLD, 16));
+        windSpeedLabel.setForeground(Color.BLACK);
+        boxPanel.add(windSpeedLabel);
+
         add(boxPanel, BorderLayout.CENTER);
     }
 
@@ -99,6 +134,7 @@ public class WeatherAppGui extends JFrame {
             return null;
         }
     }
+    
 
     /** ดึงข้อมูลอากาศจาก API และอัปเดต GUI **/
     private void fetchWeatherData() {
@@ -106,22 +142,41 @@ public class WeatherAppGui extends JFrame {
         if (location.isEmpty()) {
             locationLabel.setText("Enter a city name");
             weatherInfoLabel.setText("---");
+            humidityLabel.setText("---");
+            windSpeedLabel.setText("---");
             return;
         }
-
+    
         try {
             WeatherInfo weatherData = WeatherService.getWeatherData(location);
+    
+            if (weatherData == null) {
+                locationLabel.setText("City not found");
+                weatherInfoLabel.setText("---");
+                humidityLabel.setText("---");
+                windSpeedLabel.setText("---");
+                return;
+            }
+    
             locationLabel.setText(weatherData.getCity());
             weatherInfoLabel.setText(String.format("%.1f°C | %s", weatherData.getTemperature(), weatherData.getWeatherCondition()));
-
-            // เปลี่ยนรูปสภาพอากาศตามข้อมูลจริง
+    
+            // เพิ่มข้อมูลความชื้นและลม
+            humidityLabel.setText(String.format("Humidity: %.1f%%", weatherData.getHumidity()));
+            windSpeedLabel.setText(String.format("Wind Speed: %.1f km/h", weatherData.getWindSpeed()));
+    
+            // ปรับไอคอนสภาพอากาศ
             updateWeatherIcon(weatherData.getWeatherCondition());
+    
         } catch (Exception e) {
-            locationLabel.setText("City not found");
+            locationLabel.setText("Error fetching data");
             weatherInfoLabel.setText("---");
-            System.out.println("❌ Error fetching weather data: " + e.getMessage());
+            humidityLabel.setText("---");
+            windSpeedLabel.setText("---");
+            System.err.println("❌ Error: " + e.getMessage());
         }
     }
+    
 
     /** อัปเดตรูปสภาพอากาศ **/
     private void updateWeatherIcon(String weatherCondition) {
