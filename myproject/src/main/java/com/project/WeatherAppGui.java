@@ -180,7 +180,7 @@ public class WeatherAppGui extends JFrame {
 
     /** อัปเดตรูปสภาพอากาศ **/
     private void updateWeatherIcon(String weatherCondition) {
-        String basePath = "C:/Users/11/MyProject/myproject/src/main/assets/weatherapp_images/";
+        String basePath = "myproject/src/main/assets/weatherapp_images/";
         String imagePath = basePath + "cloudy.png"; // ค่าเริ่มต้น
 
         if (weatherCondition.equalsIgnoreCase("Clear")) {
