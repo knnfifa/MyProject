@@ -21,7 +21,20 @@ public class WeatherService {
                 return null;
             }
     
-            // ดึงข้อมูลอากาศจาก API
+            // ✅ ดึงข้อมูล timezone จาก GEO API
+            String geoResponse = ApiClient.fetchApiResponse(String.format(GEO_API, city.replaceAll(" ", "+")));
+            JsonNode geoData = mapper.readTree(geoResponse).get("results");
+    
+            String timezone = "UTC"; // ค่าเริ่มต้น
+            if (geoData != null && geoData.size() > 0) {
+                JsonNode firstResult = geoData.get(0);
+                if (firstResult.has("timezone")) {
+                    timezone = firstResult.get("timezone").asText();
+                }
+            }
+            System.out.println("✅ Timezone from API: " + timezone); // Debugging Timezone
+    
+            // ✅ ดึงข้อมูลอากาศจาก API Forecast
             String weatherResponse = ApiClient.fetchApiResponse(String.format(WEATHER_API, location.getLatitude(), location.getLongitude()));
             JsonNode weatherData = mapper.readTree(weatherResponse).get("hourly");
     
@@ -31,7 +44,7 @@ public class WeatherService {
             double humidity = weatherData.has("relativehumidity_2m") ? weatherData.get("relativehumidity_2m").get(0).asDouble() : 0;
             double windSpeed = weatherData.has("windspeed_10m") ? weatherData.get("windspeed_10m").get(0).asDouble() : 0;
     
-            // ✅ ปรับให้ถ้าอุณหภูมิต่ำกว่า -5°C และเป็น Cloudy ให้แสดง Snow
+            // ✅ ตรวจสอบเงื่อนไขว่าควรเปลี่ยนเป็น Snow หรือไม่
             String weatherCondition;
             if (snowfall > 0) {
                 weatherCondition = "Snow";
@@ -41,12 +54,14 @@ public class WeatherService {
                 weatherCondition = convertWeatherCode(weatherCode);
             }
     
-            return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed);
+            // ✅ เพิ่ม timezone เข้าไปใน WeatherInfo
+            return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed,timezone);
         } catch (Exception e) {
             System.err.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
+    
     
 
     private static Location getCityCoordinates(String city) {
