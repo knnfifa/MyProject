@@ -9,6 +9,11 @@ import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import com.project.models.WeatherInfo;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
 
 
 public class WeatherAppGui extends JFrame {
@@ -21,12 +26,14 @@ public class WeatherAppGui extends JFrame {
     private JLabel windIconLabel;
     private JLabel humidityLabel;
     private JLabel windSpeedLabel;
+    private JLabel currentTimeLabel;  // เพิ่ม JLabel สำหรับแสดงเวลา
+    
 
     public WeatherAppGui() {
         super("Weather App");
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(800, 450);
+        setSize(500, 700);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         setResizable(false);
@@ -46,26 +53,33 @@ public class WeatherAppGui extends JFrame {
 
         // แสดงรูปภาพสภาพอากาศ
         weatherConditionImage = new JLabel(defaultIcon);
-        weatherConditionImage.setBounds(100, 80, 150, 150);
+        weatherConditionImage.setBounds(170, 200, 150, 150);
         boxPanel.add(weatherConditionImage);
 
         // เพิ่ม JLabel สำหรับแสดงชื่อเมือง
         locationLabel = new JLabel("Enter a city name", SwingConstants.CENTER);
-        locationLabel.setBounds(50, 40, 250, 30);
+        locationLabel.setBounds(110, 100, 250, 30);
         locationLabel.setFont(new Font("Tahoma", Font.BOLD, 20));
         locationLabel.setForeground(Color.BLACK);
         boxPanel.add(locationLabel);
 
         // เพิ่ม JLabel สำหรับแสดงข้อมูลอากาศ
         weatherInfoLabel = new JLabel("---", SwingConstants.CENTER);
-        weatherInfoLabel.setBounds(100, 240, 150, 30);
+        weatherInfoLabel.setBounds(160, 400, 150, 30);
         weatherInfoLabel.setFont(new Font("Tahoma", Font.BOLD, 18));
         weatherInfoLabel.setForeground(Color.BLACK);
         boxPanel.add(weatherInfoLabel);
 
+        // เพิ่ม JLabel สำหรับแสดงเวลา
+        currentTimeLabel = new JLabel("Last updated: --:--", SwingConstants.CENTER); // ป้ายเวลาปัจจุบัน
+        currentTimeLabel.setBounds(90, 130, 300, 30);  // ตำแหน่งใต้ชื่อเมือง
+        currentTimeLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        currentTimeLabel.setForeground(Color.BLACK);
+        boxPanel.add(currentTimeLabel);
+
         // เพิ่ม JTextField สำหรับพิมพ์ชื่อเมือง
         searchTextField = new JTextField();
-        searchTextField.setBounds(380, 15, 250, 45);
+        searchTextField.setBounds(100, 15, 250, 45);
         searchTextField.setFont(new Font("Arial", Font.PLAIN, 14));
         boxPanel.add(searchTextField);
 
@@ -75,7 +89,7 @@ public class WeatherAppGui extends JFrame {
 
         // ปุ่มค้นหา
         searchButton = new JButton(searchIcon);
-        searchButton.setBounds(640, 15, 50, 45);
+        searchButton.setBounds(350, 15, 50, 45);
         searchButton.setFocusPainted(false);
         searchButton.setBackground(Color.WHITE);
         searchButton.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
@@ -98,24 +112,24 @@ public class WeatherAppGui extends JFrame {
         ImageIcon windIcon = loadTransparentImage(windIconPath, 30, 30);
 
         humidityIconLabel = new JLabel(humidityIcon);
-        humidityIconLabel.setBounds(50, 310, 30, 30); //ไอคอนความชืน
+        humidityIconLabel.setBounds(50, 500, 30, 30); //ไอคอนความชื้น
         boxPanel.add(humidityIconLabel);
 
         // สร้าง JLabel สำหรับข้อมูลความชื้น
         humidityLabel = new JLabel("Humidity: --%", SwingConstants.CENTER);
-        humidityLabel.setBounds(35, 310, 250, 30); //// ข้อความความชื้น 
+        humidityLabel.setBounds(35, 500, 250, 30); //// ข้อความความชื้น 
         humidityLabel.setFont(new Font("Tahoma", Font.BOLD, 16));
         humidityLabel.setForeground(Color.BLACK);
         boxPanel.add(humidityLabel);
 
         // สร้าง JLabel สำหรับไอคอนลม
         windIconLabel = new JLabel(windIcon);
-        windIconLabel.setBounds(50, 360, 30, 30); // ไอคอนลม
+        windIconLabel.setBounds(50, 550, 30, 30); // ไอคอนลม
         boxPanel.add(windIconLabel);
 
         // สร้าง JLabel สำหรับข้อมูลความเร็วลม
         windSpeedLabel = new JLabel("Wind Speed: -- km/h", SwingConstants.CENTER);
-        windSpeedLabel.setBounds(65, 360, 250, 30);  //ข้อความลม
+        windSpeedLabel.setBounds(65, 550, 250, 30);  //ข้อความลม
         windSpeedLabel.setFont(new Font("Tahoma", Font.BOLD, 16));
         windSpeedLabel.setForeground(Color.BLACK);
         boxPanel.add(windSpeedLabel);
@@ -134,7 +148,6 @@ public class WeatherAppGui extends JFrame {
             return null;
         }
     }
-    
 
     /** ดึงข้อมูลอากาศจาก API และอัปเดต GUI **/
     private void fetchWeatherData() {
@@ -146,10 +159,10 @@ public class WeatherAppGui extends JFrame {
             windSpeedLabel.setText("---");
             return;
         }
-    
+
         try {
             WeatherInfo weatherData = WeatherService.getWeatherData(location);
-    
+
             if (weatherData == null) {
                 locationLabel.setText("City not found");
                 weatherInfoLabel.setText("---");
@@ -157,22 +170,47 @@ public class WeatherAppGui extends JFrame {
                 windSpeedLabel.setText("---");
                 return;
             }
-    
+
             locationLabel.setText(weatherData.getCity());
             weatherInfoLabel.setText(String.format("%.1f°C | %s", weatherData.getTemperature(), weatherData.getWeatherCondition()));
-    
+
             // เพิ่มข้อมูลความชื้นและลม
             humidityLabel.setText(String.format("Humidity: %.1f%%", weatherData.getHumidity()));
             windSpeedLabel.setText(String.format("Wind Speed: %.1f km/h", weatherData.getWindSpeed()));
-    
+
+            // เพิ่มเวลาปัจจุบันตาม timezone ของเมืองที่ค้นหา
+            updateTimeLabel(weatherData.getTimezone());  // ใช้ข้อมูล timezone จาก API
+
             // ปรับไอคอนสภาพอากาศ
             updateWeatherIcon(weatherData.getWeatherCondition());
-    
+
         } catch (Exception e) {
             locationLabel.setText("Error fetching data");
             weatherInfoLabel.setText("---");
             humidityLabel.setText("---");
             windSpeedLabel.setText("---");
+            System.err.println("❌ Error: " + e.getMessage());
+        }
+    }
+
+    // ฟังก์ชั่นสำหรับอัปเดตเวลาปัจจุบัน
+    private void updateTimeLabel(String timezone) {
+        try {
+            if (timezone == null || timezone.isEmpty()) {
+                currentTimeLabel.setText("Timezone not available");
+                return;
+            }
+    
+            ZoneId zoneId = ZoneId.of(timezone); // ✅ ใช้ timezone ที่ได้จาก API
+            ZonedDateTime zonedDateTime = ZonedDateTime.now(zoneId);
+    
+            // รูปแบบวันที่และเวลา
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+            String formattedTime = zonedDateTime.format(formatter);
+    
+            currentTimeLabel.setText("Last updated: " + formattedTime);
+        } catch (Exception e) {
+            currentTimeLabel.setText("Error updating time");
             System.err.println("❌ Error: " + e.getMessage());
         }
     }

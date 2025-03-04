@@ -7,14 +7,16 @@ public class WeatherInfo {
     private double snowfall;
     private double humidity;
     private double windSpeed;
-
-    public WeatherInfo(String city, double temperature, String weatherCondition, double snowfall, double humidity, double windSpeed) {
+    private String timezone;  // เพิ่มฟิลด์ timezone
+    
+    public WeatherInfo(String city, double temperature, String weatherCondition, double snowfall, double humidity, double windSpeed,String timezone) {
         this.city = city;
         this.temperature = temperature;
         this.weatherCondition = weatherCondition;
         this.snowfall = snowfall;
         this.humidity = humidity;
         this.windSpeed = windSpeed;
+        this.timezone = timezone;
     }
 
     public String getCity() { return city; }
@@ -26,6 +28,7 @@ public class WeatherInfo {
     public void setWindSpeed(double windSpeed) {
         this.windSpeed = windSpeed;
     }
+    public String getTimezone() { return timezone; } // ✅ เพิ่ม getter สำหรับ timezone
 
     @Override
     public String toString() {
