@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import com.project.models.WeatherInfo;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -27,6 +26,9 @@ public class WeatherAppGui extends JFrame {
     private JLabel humidityLabel;
     private JLabel windSpeedLabel;
     private JLabel currentTimeLabel;  // เพิ่ม JLabel สำหรับแสดงเวลา
+    private JPanel humidityCard, windSpeedCard, pm2_5Card, sunriseCard, sunsetCard, visibilityCard;
+    private JPanel cardsPanel;
+    private ImageIcon humidityIcon, windIcon, pm2_5Icon, sunriseIcon, sunsetIcon, visibilityIcon;
     
 
     public WeatherAppGui() {
@@ -41,11 +43,21 @@ public class WeatherAppGui extends JFrame {
         addGuiComponents();
     }
 
+    private void loadIcons() {
+        humidityIcon = loadTransparentImage("myproject/src/main/assets/weatherapp_images/humidity.png", 40, 40);
+        windIcon = loadTransparentImage("myproject/src/main/assets/weatherapp_images/wind.png", 40, 40);
+        pm2_5Icon = loadTransparentImage("myproject/src/main/assets/weatherapp_images/pm2_5.png", 40, 40);
+        sunriseIcon = loadTransparentImage("myproject/src/main/assets/weatherapp_images/sunrise.png", 40, 40);
+        sunsetIcon = loadTransparentImage("myproject/src/main/assets/weatherapp_images/sunset.png", 40, 40);
+        visibilityIcon = loadTransparentImage("myproject/src/main/assets/weatherapp_images/visibility.png", 40, 40);
+    }
+
     private void addGuiComponents() {
         JPanel boxPanel = new JPanel();
         boxPanel.setPreferredSize(new Dimension(600, 300));
         boxPanel.setBackground(Color.LIGHT_GRAY);
         boxPanel.setLayout(null);
+        loadIcons();
 
         // โหลดรูปเมฆเริ่มต้น
         String defaultImagePath = "myproject/src/main/assets/weatherapp_images/cloudy.png";
@@ -103,6 +115,31 @@ public class WeatherAppGui extends JFrame {
             }
         });
 
+         // 🌟 **สร้าง Panel สำหรับ Card UI** 🌟
+         cardsPanel = new JPanel();
+         cardsPanel.setLayout(new GridLayout(2, 3, 10, 10));
+         cardsPanel.setBounds(30, 450, 440, 200); 
+         cardsPanel.setBackground(Color.LIGHT_GRAY);
+
+        humidityCard = createCard("Humidity", "--%", humidityIcon);
+        windSpeedCard = createCard("Wind", "-- km/h", windIcon);
+        pm2_5Card = createCard("PM2.5", "-- µg/m³", pm2_5Icon);
+        sunriseCard = createCard("Sunrise", "--:-- AM", sunriseIcon);
+        sunsetCard = createCard("Sunset", "--:-- PM", sunsetIcon);
+        visibilityCard = createCard("Visibility", "-- km", visibilityIcon);
+         
+         
+
+        cardsPanel.add(humidityCard);
+        cardsPanel.add(windSpeedCard);
+        cardsPanel.add(pm2_5Card);
+        cardsPanel.add(sunriseCard);
+        cardsPanel.add(sunsetCard);
+        cardsPanel.add(visibilityCard);
+
+        boxPanel.add(cardsPanel);
+        add(boxPanel, BorderLayout.CENTER);
+
         // โหลดรูปภาพสำหรับความชื้น
         String humidityIconPath = "myproject/src/main/assets/weatherapp_images/humidity.png";
         ImageIcon humidityIcon = loadTransparentImage(humidityIconPath, 30, 30);
@@ -137,6 +174,51 @@ public class WeatherAppGui extends JFrame {
         add(boxPanel, BorderLayout.CENTER);
     }
 
+    /** 🔹 ฟังก์ชันสร้าง Card **/
+    private JPanel createCard(String title, String value, ImageIcon icon) {
+        JPanel card = new JPanel();
+        card.setLayout(new BorderLayout());
+        card.setPreferredSize(new Dimension(130, 100));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+    
+        JLabel iconLabel = new JLabel(icon);
+        iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    
+        JLabel textLabel = new JLabel("<html><center><b>" + title + "</b><br>" + value + "</center></html>", SwingConstants.CENTER);
+        textLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+    
+        card.add(iconLabel, BorderLayout.NORTH);
+        card.add(textLabel, BorderLayout.CENTER);
+    
+        return card;
+    }
+    
+    private void updateCards(WeatherInfo weatherData) {
+        setCardText(humidityCard, "Humidity", formatCard("Humidity", weatherData.getHumidity() + "%"));
+        setCardText(windSpeedCard, "Wind", formatCard("Wind", weatherData.getWindSpeed() + " km/h"));
+        setCardText(pm2_5Card, "PM2.5", formatCard("PM2.5", weatherData.getPm2_5() + " µg/m³"));
+        setCardText(sunriseCard, "Sunrise", formatCard("Sunrise", weatherData.getSunrise()));
+        setCardText(sunsetCard, "Sunset", formatCard("Sunset", weatherData.getSunset()));
+        setCardText(visibilityCard, "Visibility", formatCard("Visibility", weatherData.getVisibility() + " km"));
+    
+        cardsPanel.revalidate();
+        cardsPanel.repaint();
+    }
+    
+    
+    private void setCardText(JPanel card, String title, String value) {
+        JLabel textLabel = (JLabel) card.getComponent(1); // ดึง JLabel ตัวที่สอง (index 1)
+        textLabel.setText("<html><center><b>" + title + "</b><br>" + value + "</center></html>");
+    }
+    
+    
+
+    private String formatCard(String title, String value) {
+        return "<html><center>" + value + "</center></html>";
+    }
+
+   
     /** โหลดรูปและปรับขนาด พร้อมรองรับพื้นหลังโปร่งใส **/
     private ImageIcon loadTransparentImage(String path, int width, int height) {
         try {
@@ -151,6 +233,7 @@ public class WeatherAppGui extends JFrame {
 
     /** ดึงข้อมูลอากาศจาก API และอัปเดต GUI **/
     private void fetchWeatherData() {
+        // รับค่าจากช่องค้นหา
         String location = searchTextField.getText().trim();
         if (location.isEmpty()) {
             locationLabel.setText("Enter a city name");
@@ -159,10 +242,10 @@ public class WeatherAppGui extends JFrame {
             windSpeedLabel.setText("---");
             return;
         }
-
+    
         try {
             WeatherInfo weatherData = WeatherService.getWeatherData(location);
-
+    
             if (weatherData == null) {
                 locationLabel.setText("City not found");
                 weatherInfoLabel.setText("---");
@@ -170,20 +253,19 @@ public class WeatherAppGui extends JFrame {
                 windSpeedLabel.setText("---");
                 return;
             }
-
+    
             locationLabel.setText(weatherData.getCity());
             weatherInfoLabel.setText(String.format("%.1f°C | %s", weatherData.getTemperature(), weatherData.getWeatherCondition()));
-
-            // เพิ่มข้อมูลความชื้นและลม
-            humidityLabel.setText(String.format("Humidity: %.1f%%", weatherData.getHumidity()));
-            windSpeedLabel.setText(String.format("Wind Speed: %.1f km/h", weatherData.getWindSpeed()));
-
-            // เพิ่มเวลาปัจจุบันตาม timezone ของเมืองที่ค้นหา
-            updateTimeLabel(weatherData.getTimezone());  // ใช้ข้อมูล timezone จาก API
-
-            // ปรับไอคอนสภาพอากาศ
+    
+            // ✅ อัปเดตค่าของการ์ด
+            updateCards(weatherData);
+    
+            // ✅ อัปเดตเวลาล่าสุด
+            updateTimeLabel(weatherData.getTimezone());
+    
+            // ✅ ปรับไอคอนสภาพอากาศ
             updateWeatherIcon(weatherData.getWeatherCondition());
-
+    
         } catch (Exception e) {
             locationLabel.setText("Error fetching data");
             weatherInfoLabel.setText("---");
@@ -192,6 +274,7 @@ public class WeatherAppGui extends JFrame {
             System.err.println("❌ Error: " + e.getMessage());
         }
     }
+    
 
     // ฟังก์ชั่นสำหรับอัปเดตเวลาปัจจุบัน
     private void updateTimeLabel(String timezone) {

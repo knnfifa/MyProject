@@ -21,20 +21,7 @@ public class WeatherService {
                 return null;
             }
     
-            // ✅ ดึงข้อมูล timezone จาก GEO API
-            String geoResponse = ApiClient.fetchApiResponse(String.format(GEO_API, city.replaceAll(" ", "+")));
-            JsonNode geoData = mapper.readTree(geoResponse).get("results");
-    
-            String timezone = "UTC"; // ค่าเริ่มต้น
-            if (geoData != null && geoData.size() > 0) {
-                JsonNode firstResult = geoData.get(0);
-                if (firstResult.has("timezone")) {
-                    timezone = firstResult.get("timezone").asText();
-                }
-            }
-            System.out.println("✅ Timezone from API: " + timezone); // Debugging Timezone
-    
-            // ✅ ดึงข้อมูลอากาศจาก API Forecast
+            // ดึงข้อมูลอากาศจาก API
             String weatherResponse = ApiClient.fetchApiResponse(String.format(WEATHER_API, location.getLatitude(), location.getLongitude()));
             JsonNode weatherData = mapper.readTree(weatherResponse).get("hourly");
     
@@ -43,8 +30,20 @@ public class WeatherService {
             double snowfall = weatherData.has("snowfall") ? weatherData.get("snowfall").get(0).asDouble() : 0;
             double humidity = weatherData.has("relativehumidity_2m") ? weatherData.get("relativehumidity_2m").get(0).asDouble() : 0;
             double windSpeed = weatherData.has("windspeed_10m") ? weatherData.get("windspeed_10m").get(0).asDouble() : 0;
+            double pressure = weatherData.has("surface_pressure") ? weatherData.get("surface_pressure").get(0).asDouble() : 0;
+            double visibility = weatherData.has("visibility") ? weatherData.get("visibility").get(0).asDouble() : 0;
     
-            // ✅ ตรวจสอบเงื่อนไขว่าควรเปลี่ยนเป็น Snow หรือไม่
+            // ตรวจสอบข้อมูล timezone
+            JsonNode timezoneData = new ObjectMapper().readTree(weatherResponse).get("timezone");
+            String timezone = timezoneData != null ? timezoneData.asText() : "Timezone not available";
+    
+            // ดึงเวลาพระอาทิตย์ขึ้นและตก
+            String sunrise = weatherData.has("sunrise") ? weatherData.get("sunrise").get(0).asText() : "--:--";
+            String sunset = weatherData.has("sunset") ? weatherData.get("sunset").get(0).asText() : "--:--";
+    
+            System.out.println("Timezone from API: " + timezone);
+    
+            // ✅ ปรับให้แสดง Snow เมื่ออุณหภูมิต่ำและมีเมฆมาก
             String weatherCondition;
             if (snowfall > 0) {
                 weatherCondition = "Snow";
@@ -54,13 +53,13 @@ public class WeatherService {
                 weatherCondition = convertWeatherCode(weatherCode);
             }
     
-            // ✅ เพิ่ม timezone เข้าไปใน WeatherInfo
-            return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed,timezone);
+            return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed, pressure, sunrise, sunset, visibility, timezone);
         } catch (Exception e) {
             System.err.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
+    
     
     
 
