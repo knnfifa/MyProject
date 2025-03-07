@@ -33,15 +33,23 @@ public class WeatherService {
             double pressure = weatherData.has("surface_pressure") ? weatherData.get("surface_pressure").get(0).asDouble() : 0;
             double visibility = weatherData.has("visibility") ? weatherData.get("visibility").get(0).asDouble() : 0;
     
-            // ตรวจสอบข้อมูล timezone
-            JsonNode timezoneData = new ObjectMapper().readTree(weatherResponse).get("timezone");
-            String timezone = timezoneData != null ? timezoneData.asText() : "Timezone not available";
+
+            String geoResponse = ApiClient.fetchApiResponse(String.format(GEO_API, city.replaceAll(" ", "+")));
+            JsonNode geoData = mapper.readTree(geoResponse).get("results");
+    
+            String timezone = "UTC"; // ค่าเริ่มต้น
+            if (geoData != null && geoData.size() > 0) {
+                JsonNode firstResult = geoData.get(0);
+                if (firstResult.has("timezone")) {
+                    timezone = firstResult.get("timezone").asText();
+                }
+            }
+            System.out.println("✅ Timezone from API: " + timezone); 
     
             // ดึงเวลาพระอาทิตย์ขึ้นและตก
             String sunrise = weatherData.has("sunrise") ? weatherData.get("sunrise").get(0).asText() : "--:--";
             String sunset = weatherData.has("sunset") ? weatherData.get("sunset").get(0).asText() : "--:--";
     
-            System.out.println("Timezone from API: " + timezone);
     
             // ✅ ปรับให้แสดง Snow เมื่ออุณหภูมิต่ำและมีเมฆมาก
             String weatherCondition;
@@ -92,4 +100,6 @@ public class WeatherService {
             default: return "Unknown";
         }
     }
+
+    
 }

@@ -47,7 +47,7 @@ public class WeatherInfo {
     public String toString() {
         return String.format(
             "📍 เมือง: %s\n🌡 อุณหภูมิ: %.2f°C\n⛅ สภาพอากาศ: %s\n❄ หิมะตก: %.1f mm\n💧 ความชื้น: %.1f%%\n💨 ความเร็วลม: %.1f km/h\n🌫 PM2.5: %.1f µg/m³",
-            city, temperature, weatherCondition, snowfall, humidity, windSpeed, pm2_5
+            city, temperature, weatherCondition, snowfall, humidity, windSpeed, pm2_5,timezone
         );
     }
 }
