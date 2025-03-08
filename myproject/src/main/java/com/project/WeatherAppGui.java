@@ -77,10 +77,13 @@ public class WeatherAppGui extends JFrame {
 
         // เพิ่ม JLabel สำหรับแสดงข้อมูลอากาศ
         weatherInfoLabel = new JLabel("---", SwingConstants.CENTER);
-        weatherInfoLabel.setBounds(160, 400, 150, 30);
+        weatherInfoLabel.setHorizontalAlignment(SwingConstants.CENTER); // จัดกึ่งกลางแนวนอน
+        weatherInfoLabel.setVerticalAlignment(SwingConstants.CENTER);   // จัดกึ่งกลางแนวตั้ง
+        weatherInfoLabel.setBounds(120, 400, 250, 30);
         weatherInfoLabel.setFont(new Font("Tahoma", Font.BOLD, 18));
         weatherInfoLabel.setForeground(Color.BLACK);
         boxPanel.add(weatherInfoLabel);
+
 
         // เพิ่ม JLabel สำหรับแสดงเวลา
         currentTimeLabel = new JLabel("Last updated: --:--", SwingConstants.CENTER); // ป้ายเวลาปัจจุบัน
@@ -303,20 +306,27 @@ public class WeatherAppGui extends JFrame {
     private void updateWeatherIcon(String weatherCondition) {
         String basePath = "myproject/src/main/assets/weatherapp_images/";
         String imagePath = basePath + "cloudy.png"; // ค่าเริ่มต้น
-
+    
         if (weatherCondition.equalsIgnoreCase("Clear")) {
             imagePath = basePath + "clear.png";
         } else if (weatherCondition.equalsIgnoreCase("Cloudy")) {
             imagePath = basePath + "cloudy.png";
-        } else if (weatherCondition.equalsIgnoreCase("Rain")) {
-            imagePath = basePath + "rain.png";
         } else if (weatherCondition.equalsIgnoreCase("Snow")) {
             imagePath = basePath + "snow.png";
+        } else if (weatherCondition.toLowerCase().contains("rain") || weatherCondition.toLowerCase().contains("shower")) {
+            // ถ้า weatherCondition มีคำว่า "rain" หรือ "shower" ให้ใช้รูปฝน
+            imagePath = basePath + "rain.png";
+        } else if (weatherCondition.toLowerCase().contains("thunderstorm")) {
+            // ถ้ามีพายุฝนฟ้าคะนอง ใช้รูป thunderstorm
+            imagePath = basePath + "thunderstorm.png";
+        } else if (weatherCondition.toLowerCase().contains("fog") || weatherCondition.toLowerCase().contains("mist")) {
+            // ถ้ามีหมอกหรือหมอกควัน ใช้รูป fog
+            imagePath = basePath + "fog.png";
         }
-
+    
         weatherConditionImage.setIcon(loadTransparentImage(imagePath, 150, 150));
     }
-
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             WeatherAppGui app = new WeatherAppGui();
