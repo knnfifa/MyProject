@@ -4,13 +4,25 @@ import com.project.models.WeatherInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.models.Location;
-
-
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.text.DecimalFormat;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class WeatherService {
-    private static final String GEO_API = "https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json";
-    private static final String WEATHER_API = "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode,relativehumidity_2m,windspeed_10m";
 
+    private static final String GEO_API = "https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json";
+    private static final String WEATHER_API = "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current_weather=true&hourly=relativehumidity_2m&daily=sunrise,sunset&timezone=auto";
+
+    // 🔹 AQICN API (ใช้ชื่อเมือง)
+    private static final String AQICN_API = "https://api.waqi.info/feed/%s/?token=%s";
+    private static final String AQICN_API_TOKEN = "1da70d483aacbc39f13f7106ac075a9457cacab8";
+
+    // 🔹 OpenWeatherMap API (ใช้ Latitude/Longitude)
+    private static final String OPENWEATHER_API_KEY = "7c5e217b38389be1fe387de7ac88d9a7";  // 🔹 เปลี่ยนเป็น API Key ของคุณ
+    private static final String PM25_API = "http://api.openweathermap.org/data/2.5/air_pollution?lat=%f&lon=%f&appid=%s";
+    
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static WeatherInfo getWeatherData(String city) {
@@ -20,56 +32,60 @@ public class WeatherService {
                 System.err.println("❌ ไม่พบพิกัดของเมือง: " + city);
                 return null;
             }
-    
-            // ดึงข้อมูลอากาศจาก API
-            String weatherResponse = ApiClient.fetchApiResponse(String.format(WEATHER_API, location.getLatitude(), location.getLongitude()));
-            JsonNode weatherData = mapper.readTree(weatherResponse).get("hourly");
-    
-            double temperature = weatherData.get("temperature_2m").get(0).asDouble();
-            int weatherCode = weatherData.get("weathercode").get(0).asInt();
-            double snowfall = weatherData.has("snowfall") ? weatherData.get("snowfall").get(0).asDouble() : 0;
-            double humidity = weatherData.has("relativehumidity_2m") ? weatherData.get("relativehumidity_2m").get(0).asDouble() : 0;
-            double windSpeed = weatherData.has("windspeed_10m") ? weatherData.get("windspeed_10m").get(0).asDouble() : 0;
-            double pressure = weatherData.has("surface_pressure") ? weatherData.get("surface_pressure").get(0).asDouble() : 0;
-            double visibility = weatherData.has("visibility") ? weatherData.get("visibility").get(0).asDouble() : 0;
-    
 
-            String geoResponse = ApiClient.fetchApiResponse(String.format(GEO_API, city.replaceAll(" ", "+")));
-            JsonNode geoData = mapper.readTree(geoResponse).get("results");
-    
-            String timezone = "UTC"; // ค่าเริ่มต้น
-            if (geoData != null && geoData.size() > 0) {
-                JsonNode firstResult = geoData.get(0);
-                if (firstResult.has("timezone")) {
-                    timezone = firstResult.get("timezone").asText();
+            String weatherResponse = ApiClient.fetchApiResponse(String.format(WEATHER_API, location.getLatitude(), location.getLongitude()));
+            JsonNode rootData = mapper.readTree(weatherResponse);
+            JsonNode currentWeather = rootData.get("current_weather");
+
+            double temperature = currentWeather.get("temperature").asDouble();
+            int weatherCode = currentWeather.get("weathercode").asInt();
+            String currentTime = currentWeather.get("time").asText();
+
+            JsonNode hourly = rootData.get("hourly");
+            JsonNode hourlyTime = hourly.get("time");
+            JsonNode hourlyHumidity = hourly.get("relativehumidity_2m");
+
+            double humidity = hourlyHumidity.get(0).asDouble();
+            long minDiff = Long.MAX_VALUE;
+
+            LocalDateTime currentTimeParsed = LocalDateTime.parse(currentTime);
+
+            for (int i = 0; i < hourlyTime.size(); i++) {
+                LocalDateTime hourlyTimeParsed = LocalDateTime.parse(hourlyTime.get(i).asText());
+                long diff = Math.abs(ChronoUnit.MINUTES.between(currentTimeParsed, hourlyTimeParsed));
+
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    humidity = hourlyHumidity.get(i).asDouble();
                 }
             }
-            System.out.println("✅ Timezone from API: " + timezone); 
-    
-            // ดึงเวลาพระอาทิตย์ขึ้นและตก
-            String sunrise = weatherData.has("sunrise") ? weatherData.get("sunrise").get(0).asText() : "--:--";
-            String sunset = weatherData.has("sunset") ? weatherData.get("sunset").get(0).asText() : "--:--";
-    
-    
-            // ✅ ปรับให้แสดง Snow เมื่ออุณหภูมิต่ำและมีเมฆมาก
-            String weatherCondition;
-            if (snowfall > 0) {
-                weatherCondition = "Snow";
-            } else if (temperature <= -5 && convertWeatherCode(weatherCode).equals("Cloudy")) {
-                weatherCondition = "Snow";
-            } else {
-                weatherCondition = convertWeatherCode(weatherCode);
-            }
-    
-            return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed, pressure, sunrise, sunset, visibility, timezone);
+
+            double windSpeed = currentWeather.get("windspeed").asDouble();
+
+            JsonNode daily = rootData.get("daily");
+            String sunrise = daily.has("sunrise") ? daily.get("sunrise").get(0).asText() : "--:--";
+            String sunset = daily.has("sunset") ? daily.get("sunset").get(0).asText() : "--:--";
+
+            String weatherCondition = convertWeatherCode(weatherCode);
+
+            double snowfall = 0;
+            double visibility = 0;
+
+            String timezone = rootData.has("timezone") ? rootData.get("timezone").asText() : "UTC";
+
+            
+            double pm2_5 = getPM25(city, location.getLatitude(), location.getLongitude());
+
+
+
+
+            return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed, pm2_5, sunrise, sunset, visibility, timezone);
+
         } catch (Exception e) {
             System.err.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
-    
-    
-    
 
     private static Location getCityCoordinates(String city) {
         try {
@@ -81,8 +97,9 @@ public class WeatherService {
                 return null;
             }
 
-            double latitude = geoData.get(0).get("latitude").asDouble();
-            double longitude = geoData.get(0).get("longitude").asDouble();
+            JsonNode firstResult = geoData.get(0);
+            double latitude = firstResult.get("latitude").asDouble();
+            double longitude = firstResult.get("longitude").asDouble();
 
             return new Location(city, latitude, longitude);
         } catch (Exception e) {
@@ -90,6 +107,75 @@ public class WeatherService {
             return null;
         }
     }
+
+    private static final DecimalFormat df = new DecimalFormat("#.##"); // ✅ ฟอร์แมตให้มีทศนิยม 2 ตำแหน่ง
+
+    private static double getPM25(String city, double latitude, double longitude) {
+        double pm25 = -1;
+    
+        try {
+            // ✅ แปลงชื่อเมืองให้เป็น URL Encoding เช่น "Chiang Mai" → "Chiang%20Mai"
+            String encodedCity = URLEncoder.encode(city, StandardCharsets.UTF_8);
+    
+            // 🔹 1. ลองดึงข้อมูลจาก AQICN
+            System.out.println("🔍 กำลังดึงข้อมูล PM2.5 จาก AQICN...");
+            String response = ApiClient.fetchApiResponse(String.format(AQICN_API, encodedCity, AQICN_API_TOKEN));
+            JsonNode rootData = mapper.readTree(response);
+    
+            if (rootData.has("status") && rootData.get("status").asText().equals("ok")) {
+                JsonNode pm25Node = rootData.get("data").get("iaqi").get("pm25").get("v");
+                if (pm25Node != null) {
+                    double aqiValue = pm25Node.asDouble();
+                    pm25 = convertAQIToPM25(aqiValue);
+                    pm25 = Double.parseDouble(df.format(pm25));
+                    System.out.println("✅ PM2.5 จาก AQICN (แปลงเป็น µg/m³): " + pm25);
+                    return pm25;
+                }
+            }
+    
+            // 🔹 2. ถ้า AQICN ไม่มีข้อมูล ลองใช้ OpenWeatherMap
+            System.out.println("❌ AQICN ไม่มีข้อมูล ลองใช้ OpenWeatherMap...");
+            response = ApiClient.fetchApiResponse(String.format(PM25_API, latitude, longitude, OPENWEATHER_API_KEY));
+            rootData = mapper.readTree(response);
+    
+            if (rootData.has("list") && rootData.get("list").size() > 0) {
+                JsonNode pm25Node = rootData.get("list").get(0).get("components").get("pm2_5");
+                if (pm25Node != null) {
+                    pm25 = pm25Node.asDouble();
+                    pm25 = Double.parseDouble(df.format(pm25));
+                    System.out.println("✅ PM2.5 จาก OpenWeatherMap (หน่วย µg/m³): " + pm25);
+                }
+            }
+    
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching PM2.5: " + e.getMessage());
+        }
+    
+        return pm25;
+    }
+    
+    // 📌 ฟังก์ชันแปลง AQI เป็น PM2.5 (µg/m³)
+    private static double convertAQIToPM25(double aqi) {
+        double pm25;
+        if (aqi <= 50) {
+            pm25 = aqi * (12.0 / 50.0);
+        } else if (aqi <= 100) {
+            pm25 = ((aqi - 50) * (35.4 - 12.0) / 50.0) + 12.0;
+        } else if (aqi <= 150) {
+            pm25 = ((aqi - 100) * (55.4 - 35.4) / 50.0) + 35.4;
+        } else if (aqi <= 200) {
+            pm25 = ((aqi - 150) * (150.4 - 55.4) / 50.0) + 55.4;
+        } else if (aqi <= 300) {
+            pm25 = ((aqi - 200) * (250.4 - 150.4) / 100.0) + 150.4;
+        } else if (aqi <= 400) {
+            pm25 = ((aqi - 300) * (350.4 - 250.4) / 100.0) + 250.4;
+        } else {
+            pm25 = ((aqi - 400) * (500.4 - 350.4) / 100.0) + 350.4;
+        }
+        return Double.parseDouble(df.format(pm25)); // ✅ ปัดทศนิยมเหลือ 2 ตำแหน่ง
+    }
+
+    
 
     private static String convertWeatherCode(int code) {
         switch (code) {
@@ -103,10 +189,7 @@ public class WeatherService {
             case 80: case 81: case 82: return "Rain Showers";
             case 95: return "Thunderstorm";
             case 96: case 99: return "Severe Thunderstorm";
-            default: return "Unknown"; 
+            default: return "Unknown";
         }
     }
-    
-
-    
 }
