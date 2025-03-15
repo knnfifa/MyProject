@@ -13,7 +13,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 public class WeatherAppGui extends JFrame {
@@ -23,12 +22,14 @@ public class WeatherAppGui extends JFrame {
     private JPanel humidityCard, windSpeedCard, pm2_5Card, sunriseCard, sunsetCard, visibilityCard;
     private JPanel cardsPanel;
     private ImageIcon humidityIcon, windIcon, pm2_5Icon, sunriseIcon, sunsetIcon, visibilityIcon;
+    private JPanel boxPanel;
+    
 
     public WeatherAppGui() {
         super("Weather App");
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(500, 750);
+        setSize(505, 750);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         setResizable(false);
@@ -46,12 +47,17 @@ public class WeatherAppGui extends JFrame {
     }
 
     private void addGuiComponents() {
-        JPanel boxPanel = new JPanel();
+        this.boxPanel = new JPanel(); // ✅ ใช้ `this.boxPanel` ไม่ใช่สร้างตัวแปรใหม่
         boxPanel.setPreferredSize(new Dimension(600, 300));
         boxPanel.setBackground(Color.LIGHT_GRAY);
         boxPanel.setLayout(null);
         loadIcons();
-    
+        getContentPane().add(boxPanel, BorderLayout.CENTER);
+
+        cardsPanel = new JPanel();
+        cardsPanel.setLayout(new GridLayout(2, 3, 20, 20));
+        boxPanel.add(cardsPanel); // ✅ `boxPanel` ถูกต้องแล้ว
+        
         // โหลดรูปเมฆเริ่มต้น
         String defaultImagePath = "myproject/src/main/assets/weatherapp_images/cloudy.png";
         ImageIcon defaultIcon = loadTransparentImage(defaultImagePath, 150, 150);
@@ -225,24 +231,44 @@ public class WeatherAppGui extends JFrame {
             weatherInfoLabel.setText("---");
             return;
         }
-
+    
         try {
             WeatherInfo weatherData = WeatherService.getWeatherData(location);
+    
             if (weatherData == null) {
                 locationLabel.setText("City not found");
                 return;
             }
-
+    
+            String weatherCondition = weatherData.getWeatherCondition(); // ✅ ดึงค่า Weather Condition จริง
+    
             locationLabel.setText(weatherData.getCity());
-            weatherInfoLabel.setText(String.format("%.1f°C | %s", weatherData.getTemperature(), weatherData.getWeatherCondition()));
+            weatherInfoLabel.setText(String.format("%.1f°C | %s", weatherData.getTemperature(), weatherCondition));
+    
+            // ✅ Debug ดูค่าที่ส่งเข้า updateWeatherIcon()
+            System.out.println("🌤 Weather Condition: " + weatherCondition);
+    
             updateCards(weatherData);
             updateTimeLabel(weatherData.getTimezone());
-            updateWeatherIcon(weatherData.getWeatherCondition());
+    
+            // ✅ ใช้ค่าจริงของ weatherCondition ใน updateWeatherIcon()
+            updateWeatherIcon(weatherCondition);
+    
+            // ✅ ส่ง weatherCondition เข้าไปใน updateBackground()
+            if (boxPanel != null) {
+                updateBackground(weatherData.getSunrise(), weatherData.getSunset(), weatherData.getTimezone(), weatherCondition);
+            } else {
+                System.err.println("❌ boxPanel is NULL! Background will not update.");
+            }
+    
         } catch (Exception e) {
             locationLabel.setText("Error fetching data");
             System.err.println("❌ Error: " + e.getMessage());
         }
     }
+    
+    
+    
     // ฟังก์ชั่นสำหรับอัปเดตเวลาปัจจุบัน
     private void updateTimeLabel(String timezone) {
         try {
@@ -298,6 +324,89 @@ public class WeatherAppGui extends JFrame {
 
         weatherConditionImage.setIcon(loadTransparentImage(imagePath, 150, 150));
     }
+
+    private void updateBackground(String sunrise, String sunset, String timezone, String weatherCondition) {
+        try {
+            if (sunrise == null || sunset == null || sunrise.isEmpty() || sunset.isEmpty()) {
+                System.err.println("❌ Missing sunrise or sunset data!");
+                return;
+            }
+    
+            if (timezone == null || timezone.isEmpty()) {
+                System.err.println("❌ Missing timezone data!");
+                return;
+            }
+    
+            // ✅ ใช้โซนเวลาของประเทศที่ค้นหา
+            ZoneId zoneId = ZoneId.of(timezone);
+            ZonedDateTime now = ZonedDateTime.now(zoneId); // ✅ เวลาปัจจุบันของประเทศนั้น
+    
+            // ✅ แปลง sunrise/sunset เป็น LocalTime
+            LocalTime sunriseTime = LocalTime.parse(sunrise.substring(11)); 
+            LocalTime sunsetTime = LocalTime.parse(sunset.substring(11));
+    
+            // ✅ Debug ดูค่าเวลาที่ใช้เปรียบเทียบ
+            System.out.println("🌅 Sunrise: " + sunriseTime + " | 🌇 Sunset: " + sunsetTime + " | ⏰ Now: " + now.toLocalTime());
+    
+            Color backgroundColor;
+            Color textColor;
+            Color cardColor;
+            Color cardTextColor;
+    
+            if (now.toLocalTime().isAfter(sunriseTime) && now.toLocalTime().isBefore(sunsetTime)) {
+                backgroundColor = new Color(200, 230, 255); // 🌞 กลางวัน - ฟ้าอ่อน
+                textColor = Color.BLACK; // ✅ ตัวหนังสือหลักเป็นสีดำ
+                cardColor = new Color(255, 223, 120); // ✅ การ์ดเป็นสีส้มเหลืองอ่อน
+                cardTextColor = Color.BLACK; // ✅ ตัวหนังสือในการ์ดเป็นสีดำ
+            } else {
+                backgroundColor = new Color(20, 30, 50); // 🌙 กลางคืน - น้ำเงินเข้ม
+                textColor = Color.WHITE; // ✅ ตัวหนังสือหลักเป็นสีขาว
+                cardColor = new Color(100, 50, 150); // ✅ การ์ดเป็นสีม่วงอ่อน
+                cardTextColor = Color.WHITE; // ✅ ตัวหนังสือในการ์ดเป็นสีขาว
+            }
+    
+            // ✅ Debug ดูว่าพื้นหลังเปลี่ยนหรือไม่
+            System.out.println("🎨 Changing background to: " + (now.toLocalTime().isAfter(sunriseTime) && now.toLocalTime().isBefore(sunsetTime) ? "Day" : "Night"));
+    
+            // ✅ อัปเดต UI
+            SwingUtilities.invokeLater(() -> {
+                getContentPane().setBackground(backgroundColor);
+                boxPanel.setBackground(backgroundColor);
+                cardsPanel.setBackground(new Color(0, 0, 0, 0)); // ✅ โปร่งใส
+                cardsPanel.setOpaque(false);
+    
+                // ✅ เปลี่ยนสีของตัวหนังสือใน Title และ Time
+                locationLabel.setForeground(textColor);
+                weatherInfoLabel.setForeground(textColor);
+                currentTimeLabel.setForeground(textColor);
+    
+                // ✅ อัปเดตการ์ดทั้งหมดให้พื้นหลังและตัวหนังสือเปลี่ยนสี
+                for (Component comp : cardsPanel.getComponents()) {
+                    if (comp instanceof JPanel) {
+                        JPanel card = (JPanel) comp;
+                        card.setBackground(cardColor); // ✅ เปลี่ยนพื้นหลังของการ์ด
+    
+                        for (Component innerComp : card.getComponents()) {
+                            if (innerComp instanceof JLabel) {
+                                ((JLabel) innerComp).setForeground(cardTextColor); // ✅ ตัวหนังสือภายในการ์ดเปลี่ยนสีตามกลางวัน/กลางคืน
+                            }
+                        }
+                    }
+                }
+    
+                // ✅ รีโหลดไอคอนของสภาพอากาศ
+                updateWeatherIcon(weatherCondition);
+    
+                revalidate();
+                repaint();
+            });
+    
+        } catch (Exception e) {
+            System.err.println("❌ Error updating background: " + e.getMessage());
+        }
+    }
+    
+    
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
