@@ -32,60 +32,64 @@ public class WeatherService {
                 System.err.println("❌ ไม่พบพิกัดของเมือง: " + city);
                 return null;
             }
-
+    
+            // เรียกข้อมูลสภาพอากาศ
             String weatherResponse = ApiClient.fetchApiResponse(String.format(WEATHER_API, location.getLatitude(), location.getLongitude()));
             JsonNode rootData = mapper.readTree(weatherResponse);
             JsonNode currentWeather = rootData.get("current_weather");
-
+    
             double temperature = currentWeather.get("temperature").asDouble();
             int weatherCode = currentWeather.get("weathercode").asInt();
             String currentTime = currentWeather.get("time").asText();
-
+            
+            // ดึงค่า visibility จาก current_weather หรือ hourly
+            double visibility = currentWeather.has("visibility") ? currentWeather.get("visibility").asDouble() : 10.0; // ค่า default = 10.0 km หากไม่พบ
+    
+            // กำหนดความละเอียดของ visibility (ถ้า visibility มากกว่าค่าที่ได้จาก API)
+            visibility = Math.round(visibility * 10.0) / 10.0;  // round ให้มีทศนิยม 1 ตำแหน่ง
+    
             JsonNode hourly = rootData.get("hourly");
             JsonNode hourlyTime = hourly.get("time");
             JsonNode hourlyHumidity = hourly.get("relativehumidity_2m");
-
+    
             double humidity = hourlyHumidity.get(0).asDouble();
             long minDiff = Long.MAX_VALUE;
-
+    
             LocalDateTime currentTimeParsed = LocalDateTime.parse(currentTime);
-
+    
             for (int i = 0; i < hourlyTime.size(); i++) {
                 LocalDateTime hourlyTimeParsed = LocalDateTime.parse(hourlyTime.get(i).asText());
                 long diff = Math.abs(ChronoUnit.MINUTES.between(currentTimeParsed, hourlyTimeParsed));
-
+    
                 if (diff < minDiff) {
                     minDiff = diff;
                     humidity = hourlyHumidity.get(i).asDouble();
                 }
             }
-
+    
             double windSpeed = currentWeather.get("windspeed").asDouble();
-
+    
             JsonNode daily = rootData.get("daily");
             String sunrise = daily.has("sunrise") ? daily.get("sunrise").get(0).asText() : "--:--";
             String sunset = daily.has("sunset") ? daily.get("sunset").get(0).asText() : "--:--";
-
+    
             String weatherCondition = convertWeatherCode(weatherCode);
-
+    
             double snowfall = 0;
-            double visibility = 0;
-
             String timezone = rootData.has("timezone") ? rootData.get("timezone").asText() : "UTC";
-
-            
+    
             double pm2_5 = getPM25(city, location.getLatitude(), location.getLongitude());
-
-
-
-
+    
+            // ส่งค่าทั้งหมดมาใน WeatherInfo
             return new WeatherInfo(city, temperature, weatherCondition, snowfall, humidity, windSpeed, pm2_5, sunrise, sunset, visibility, timezone);
-
+    
         } catch (Exception e) {
             System.err.println("❌ Error: " + e.getMessage());
             return null;
         }
     }
+    
+    
 
     private static Location getCityCoordinates(String city) {
         try {
