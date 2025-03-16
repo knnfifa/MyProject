@@ -14,6 +14,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalTime;
 import java.util.Locale;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import java.awt.geom.RoundRectangle2D;
+
 
 public class WeatherAppGui extends JFrame {
     private JLabel locationLabel, weatherInfoLabel, weatherConditionImage, currentTimeLabel;
@@ -141,30 +145,47 @@ public class WeatherAppGui extends JFrame {
 
     /** 🔹 ฟังก์ชันสร้าง Card **/ 
     private JPanel createCard(String title, String value, ImageIcon icon) {
-        JPanel card = new JPanel(new GridBagLayout());
+        JPanel card = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    
+                // ✅ ใช้สีพื้นหลังของ Panel
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25); // ✅ ทำมุมโค้งมน 25px
+            }
+        };
+    
         card.setPreferredSize(new Dimension(130, 130));
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-
+        card.setOpaque(false); // ✅ ให้ background ของ JPanel โปร่งใส (จะใช้ paintComponent แทน)
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // ✅ เพิ่ม Padding ภายใน
+    
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.anchor = GridBagConstraints.CENTER;
-
+    
         JLabel iconLabel = new JLabel(icon);
         gbc.gridy = 0;
         card.add(iconLabel, gbc);
-
+    
         JLabel titleLabel = new JLabel("<html><center><b>" + title + "</b></center></html>");
+        titleLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
         gbc.gridy = 1;
         card.add(titleLabel, gbc);
-
+    
         JLabel valueLabel = new JLabel("<html><center>" + value + "</center></html>");
+        valueLabel.setFont(new Font("Tahoma", Font.PLAIN, 12));
         gbc.gridy = 2;
         card.add(valueLabel, gbc);
-
+    
         return card;
     }
+
+  
+    
     
    
     private void updateCards(WeatherInfo weatherData) {
