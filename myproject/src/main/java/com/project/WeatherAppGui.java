@@ -152,15 +152,20 @@ public class WeatherAppGui extends JFrame {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     
-                // ✅ ใช้สีพื้นหลังของ Panel
+                // ✅ เพิ่มเงาให้ดูนูน
+                g2.setColor(new Color(0, 0, 0, 50)); // เงาสีดำจาง
+                g2.fillRoundRect(3, 5, getWidth() - 6, getHeight() - 6, 20, 20);
+    
+                // ✅ พื้นหลังการ์ด
                 g2.setColor(getBackground());
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25); // ✅ ทำมุมโค้งมน 25px
+                g2.fillRoundRect(0, 0, getWidth() - 6, getHeight() - 6, 20, 20);
             }
         };
     
         card.setPreferredSize(new Dimension(130, 130));
-        card.setOpaque(false); // ✅ ให้ background ของ JPanel โปร่งใส (จะใช้ paintComponent แทน)
-        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // ✅ เพิ่ม Padding ภายใน
+        card.setOpaque(false); // ✅ ทำให้การ์ดไม่มีพื้นหลังที่ทับกัน
+        card.setBackground(new Color(255, 204, 102)); // ✅ สีเหลืองพาสเทล
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // ✅ ลบเส้นขอบออก
     
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -173,21 +178,19 @@ public class WeatherAppGui extends JFrame {
     
         JLabel titleLabel = new JLabel("<html><center><b>" + title + "</b></center></html>");
         titleLabel.setFont(new Font("Tahoma", Font.BOLD, 14));
+        titleLabel.setForeground(Color.BLACK);
         gbc.gridy = 1;
         card.add(titleLabel, gbc);
     
         JLabel valueLabel = new JLabel("<html><center>" + value + "</center></html>");
         valueLabel.setFont(new Font("Tahoma", Font.PLAIN, 12));
+        valueLabel.setForeground(Color.BLACK);
         gbc.gridy = 2;
         card.add(valueLabel, gbc);
     
         return card;
     }
-
-  
     
-    
-   
     private void updateCards(WeatherInfo weatherData) {
         // ✅ ใช้ formatTime() เพื่อแสดง AM/PM แทน "ก่อนเที่ยง/หลังเที่ยง"
         String sunriseTime = formatTime(weatherData.getSunrise());
