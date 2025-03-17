@@ -17,6 +17,9 @@ import java.util.Locale;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+
 
 
 public class WeatherAppGui extends JFrame {
@@ -33,7 +36,7 @@ public class WeatherAppGui extends JFrame {
         super("Weather App");
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(505, 750);
+        setSize(505, 770);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         setResizable(false);
@@ -53,7 +56,7 @@ public class WeatherAppGui extends JFrame {
     private void addGuiComponents() {
         this.boxPanel = new JPanel(); // ✅ ใช้ `this.boxPanel` ไม่ใช่สร้างตัวแปรใหม่
         boxPanel.setPreferredSize(new Dimension(600, 300));
-        boxPanel.setBackground(Color.LIGHT_GRAY);
+        boxPanel.setBackground(Color.WHITE);
         boxPanel.setLayout(null);
         loadIcons();
         getContentPane().add(boxPanel, BorderLayout.CENTER);
@@ -112,6 +115,16 @@ public class WeatherAppGui extends JFrame {
         searchButton.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         boxPanel.add(searchButton);
     
+        searchTextField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // เมื่อกด Enter จะเรียกใช้ฟังก์ชันค้นหา
+                    fetchWeatherData();  // หรือใช้ searchButton.doClick() ถ้าต้องการให้เหมือนการกดปุ่ม
+                }
+            }
+        });
+
         // Event Listener ปุ่มค้นหา
         searchButton.addActionListener(new ActionListener() {
             @Override
@@ -123,7 +136,7 @@ public class WeatherAppGui extends JFrame {
         // Card Panel
         cardsPanel = new JPanel(new GridLayout(2, 3, 20, 20));
         cardsPanel.setBounds(30, 450, 440, 250);
-        cardsPanel.setBackground(Color.LIGHT_GRAY);
+        cardsPanel.setBackground(Color.WHITE);
 
         humidityCard = createCard("Humidity", "---", humidityIcon);
         windSpeedCard = createCard("Wind", "---", windIcon);
@@ -383,10 +396,10 @@ public class WeatherAppGui extends JFrame {
                 cardColor = new Color(255, 223, 120); // ✅ การ์ดเป็นสีส้มเหลืองอ่อน
                 cardTextColor = Color.BLACK; // ✅ ตัวหนังสือในการ์ดเป็นสีดำ
             } else {
-                backgroundColor = new Color(20, 30, 50); // 🌙 กลางคืน - น้ำเงินเข้ม
-                textColor = Color.WHITE; // ✅ ตัวหนังสือหลักเป็นสีขาว
-                cardColor = new Color(100, 50, 150); // ✅ การ์ดเป็นสีม่วงอ่อน
-                cardTextColor = Color.WHITE; // ✅ ตัวหนังสือในการ์ดเป็นสีขาว
+                backgroundColor = new Color(0, 51, 102); // สีกรมท่า
+                textColor = Color.WHITE;
+                cardColor = new Color(75, 46, 130); // สีม่วงเข้ม
+                cardTextColor = Color.WHITE;
             }
     
             // ✅ Debug ดูว่าพื้นหลังเปลี่ยนหรือไม่
