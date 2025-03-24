@@ -112,13 +112,13 @@ public class WeatherService {
         }
     }
 
-    private static final DecimalFormat df = new DecimalFormat("#.##"); // ✅ ฟอร์แมตให้มีทศนิยม 2 ตำแหน่ง
+    private static final DecimalFormat df = new DecimalFormat("#.##"); // ฟอร์แมตให้มีทศนิยม 2 ตำแหน่ง
 
     private static double getPM25(String city, double latitude, double longitude) {
         double pm25 = -1;
     
         try {
-            // ✅ แปลงชื่อเมืองให้เป็น URL Encoding เช่น "Chiang Mai" → "Chiang%20Mai"
+            // แปลงชื่อเมืองให้เป็น URL Encoding เช่น "Chiang Mai" → "Chiang%20Mai"
             String encodedCity = URLEncoder.encode(city, StandardCharsets.UTF_8);
     
             // 🔹 1. ลองดึงข้อมูลจาก AQICN
@@ -158,7 +158,7 @@ public class WeatherService {
         return pm25;
     }
     
-    // 📌 ฟังก์ชันแปลง AQI เป็น PM2.5 (µg/m³)
+    //ฟังก์ชันแปลง AQI เป็น PM2.5 (µg/m³)
     private static double convertAQIToPM25(double aqi) {
         double pm25;
         if (aqi <= 50) {
@@ -176,7 +176,7 @@ public class WeatherService {
         } else {
             pm25 = ((aqi - 400) * (500.4 - 350.4) / 100.0) + 350.4;
         }
-        return Double.parseDouble(df.format(pm25)); // ✅ ปัดทศนิยมเหลือ 2 ตำแหน่ง
+        return Double.parseDouble(df.format(pm25)); //ปัดทศนิยมเหลือ 2 ตำแหน่ง
     }
 
     
