@@ -7,13 +7,13 @@ public class WeatherInfo {
     private double snowfall;
     private double humidity;
     private double windSpeed;
-    private double pm2_5;  // ✅ เพิ่มตัวแปร PM2.5
+    private double pm2_5;  
     private String sunrise;
     private String sunset;
     private double visibility;
     private String timezone;
 
-    // ✅ Constructor
+    // Constructor
     public WeatherInfo(String city, double temperature, String weatherCondition, double snowfall, double humidity, 
                        double windSpeed, double pm2_5, String sunrise, String sunset, double visibility, String timezone) {
         this.city = city;
@@ -22,14 +22,14 @@ public class WeatherInfo {
         this.snowfall = snowfall;
         this.humidity = humidity;
         this.windSpeed = windSpeed;
-        this.pm2_5 = pm2_5; // ✅ เก็บค่าฝุ่น PM2.5
+        this.pm2_5 = pm2_5; 
         this.sunrise = sunrise;
         this.sunset = sunset;
         this.visibility = visibility;
         this.timezone = timezone;
     }
 
-    // ✅ Getter Methods
+    // Getter Methods
     public String getCity() { return city; }
     public double getTemperature() { return temperature; }
     public String getWeatherCondition() { return weatherCondition; }
@@ -42,7 +42,7 @@ public class WeatherInfo {
     public double getVisibility() { return visibility; }
     public String getTimezone() { return timezone; }
 
-    // ✅ Override toString() เพื่อแสดงข้อมูล
+    // Override toString() เพื่อแสดงข้อมูล
     @Override
     public String toString() {
         return String.format(
