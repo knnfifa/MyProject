@@ -1,0 +1,102 @@
+@startuml
+
+class App {
+    + main(args: String[]): void
+}
+
+class WeatherAppGui {
+    - locationLabel: JLabel
+    - weatherInfoLabel: JLabel
+    - currentTimeLabel: JLabel
+    - searchTextField: RoundedTextField
+    - boxPanel: JPanel
+    - cardsPanel: JPanel
+    - favoriteManager: FavoriteCityManager
+    + fetchWeatherData(): void
+    + updateCards(): void
+    + updateTimeLabel(): void
+    + updateWeatherIcon(): void
+    + updateBackground(): void
+    + showFavoritesDialog(): void
+}
+
+class RoundedButton {
+    - arcSize: int
+    + RoundedButton(text: String)
+    + setBackground(bg: Color): void
+    + paintComponent(g: Graphics): void
+}
+
+class RoundedTextField {
+    - arcSize: int
+    + RoundedTextField(columns: int)
+    + paintComponent(g: Graphics): void
+    + paintBorder(g: Graphics): void
+}
+
+class FavoriteCityManager {
+    - favorites: List<String>
+    + addCity(city: String): void
+    + removeCity(city: String): void
+    + getFavorites(): List<String>
+}
+
+class WeatherService {
+    + getWeatherData(city: String): WeatherInfo
+    - getCityCoordinates(city: String): Location
+    - getPM25(city: String, lat: double, lon: double): double
+}
+
+class ApiClient {
+    + fetchApiResponse(url: String): String
+}
+
+class WeatherInfo {
+    - city: String
+    - temperature: double
+    - weatherCondition: String
+    - snowfall: double
+    - humidity: double
+    - windSpeed: double
+    - pm2_5: double
+    - sunrise: String
+    - sunset: String
+    - visibility: double
+    - timezone: String
+    + getCity(): String
+    + getTemperature(): double
+    + getWeatherCondition(): String
+    + getHumidity(): double
+    + getWindSpeed(): double
+    + getPm2_5(): double
+    + getSunrise(): String
+    + getSunset(): String
+    + getVisibility(): double
+    + getTimezone(): String
+}
+
+class Location {
+    - city: String
+    - latitude: double
+    - longitude: double
+    + getCity(): String
+    + getLatitude(): double
+    + getLongitude(): double
+}
+
+' Inheritance
+RoundedButton -|> JButton
+RoundedTextField -|> JTextField
+
+' Relationships
+App --> WeatherAppGui : creates
+WeatherAppGui --> WeatherService : uses
+WeatherAppGui --> FavoriteCityManager : uses
+WeatherAppGui --> WeatherInfo : uses
+WeatherAppGui --> RoundedButton : uses
+WeatherAppGui --> RoundedTextField : uses
+WeatherService --> ApiClient : uses
+WeatherService --> WeatherInfo : returns
+WeatherService --> Location : uses
+
+@enduml
