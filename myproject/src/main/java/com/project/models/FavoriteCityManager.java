@@ -6,7 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 public class FavoriteCityManager {
-    private static final String FILE_PATH = "favorites.json";
+    private static final String FILE_PATH = "favorites.json"; //ใช้เก็บชื่อเมืองโปรด
     private List<String> favorites = new ArrayList<>();
 
     public FavoriteCityManager() {
@@ -48,3 +48,8 @@ public class FavoriteCityManager {
         }
     }
 }
+
+
+/*จัดการรายชื่อเมืองโปรด (เพิ่ม, ลบ, ดึงข้อมูล)
+    ใช้ ไฟล์ JSON (favorites.json) ในการบันทึกและโหลดข้อมูล
+    ใช้ Gson ช่วยแปลงข้อมูลเป็น JSON */

@@ -1,8 +1,6 @@
 package com.project;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
@@ -511,7 +509,7 @@ public class WeatherAppGui extends JFrame {
                 backgroundColor = new Color(200, 230, 255); //กลางวัน - ฟ้าอ่อน
                 textColor = Color.BLACK; // ตัวหนังสือหลักเป็นสีดำ
                 cardColor = new Color(255, 223, 120); // การ์ดเป็นสีส้มเหลืองอ่อน
-                cardTextColor = Color.BLACK; // ✅ ตัวหนังสือในการ์ดเป็นสีดำ
+                cardTextColor = Color.BLACK; //ตัวหนังสือในการ์ดเป็นสีดำ
             } else {
                 backgroundColor = new Color(0, 51, 102); // สีกรมท่า
                 textColor = Color.WHITE;
