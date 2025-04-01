@@ -29,7 +29,7 @@ public class WeatherInfo {
         this.timezone = timezone;
     }
 
-    // Getter Methods
+    // Getter Methods ดึงค่าข้อมูลแต่ละตัว
     public String getCity() { return city; }
     public double getTemperature() { return temperature; }
     public String getWeatherCondition() { return weatherCondition; }
@@ -51,3 +51,8 @@ public class WeatherInfo {
         );
     }
 }
+
+/*เป็น Model Class ใช้เก็บข้อมูลเกี่ยวกับสภาพอากาศของเมือง
+    มี ตัวแปร สำหรับอุณหภูมิ, สภาพอากาศ, ความเร็วลม, PM2.5 ฯลฯ
+    มี เมธอด getter สำหรับดึงค่าต่างๆ
+    มี toString() แปลงข้อมูลเป็นข้อความที่อ่านง่าย*/

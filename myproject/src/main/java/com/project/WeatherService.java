@@ -15,12 +15,12 @@ public class WeatherService {
     private static final String GEO_API = "https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json";
     private static final String WEATHER_API = "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current_weather=true&hourly=relativehumidity_2m&daily=sunrise,sunset&timezone=auto";
 
-    // 🔹 AQICN API (ใช้ชื่อเมือง)
+    //AQICN API (ใช้ชื่อเมือง)
     private static final String AQICN_API = "https://api.waqi.info/feed/%s/?token=%s";
     private static final String AQICN_API_TOKEN = "1da70d483aacbc39f13f7106ac075a9457cacab8";
 
-    // 🔹 OpenWeatherMap API (ใช้ Latitude/Longitude)
-    private static final String OPENWEATHER_API_KEY = "7c5e217b38389be1fe387de7ac88d9a7";  // 🔹 เปลี่ยนเป็น API Key ของคุณ
+    //OpenWeatherMap API (ใช้ Latitude/Longitude)
+    private static final String OPENWEATHER_API_KEY = "7c5e217b38389be1fe387de7ac88d9a7";  //เปลี่ยนเป็น API Key ของคุณ
     private static final String PM25_API = "http://api.openweathermap.org/data/2.5/air_pollution?lat=%f&lon=%f&appid=%s";
     
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -37,6 +37,8 @@ public class WeatherService {
             String weatherResponse = ApiClient.fetchApiResponse(String.format(WEATHER_API, location.getLatitude(), location.getLongitude()));
             JsonNode rootData = mapper.readTree(weatherResponse);
             JsonNode currentWeather = rootData.get("current_weather");
+
+            System.out.println(rootData.toString()); //ลองดูค่าที่ดึง API มา
     
             double temperature = currentWeather.get("temperature").asDouble();
             int weatherCode = currentWeather.get("weathercode").asInt();
@@ -137,7 +139,7 @@ public class WeatherService {
                 }
             }
     
-            // 🔹 2. ถ้า AQICN ไม่มีข้อมูล ลองใช้ OpenWeatherMap
+            //ถ้า AQICN ไม่มีข้อมูลใช้ OpenWeatherMap
             System.out.println("❌ AQICN ไม่มีข้อมูล ลองใช้ OpenWeatherMap...");
             response = ApiClient.fetchApiResponse(String.format(PM25_API, latitude, longitude, OPENWEATHER_API_KEY));
             rootData = mapper.readTree(response);
@@ -159,6 +161,10 @@ public class WeatherService {
     }
     
     //ฟังก์ชันแปลง AQI เป็น PM2.5 (µg/m³)
+
+    /*ฟังก์ชันนี้ใช้แปลงค่าดัชนีคุณภาพอากาศ (AQI) เป็นค่าความเข้มข้นของฝุ่น PM2.5 (หน่วย µg/m³) 
+    โดยใช้สูตรแปลงตามมาตรฐานของ EPA (Environmental Protection Agency)*/
+
     private static double convertAQIToPM25(double aqi) {
         double pm25;
         if (aqi <= 50) {
@@ -180,11 +186,11 @@ public class WeatherService {
     }
 
     
-
+    //แปลงค่า Weather Code ที่ได้จาก Open-Meteo API ให้เป็นข้อความที่อ่านเข้าใจง่าย
     private static String convertWeatherCode(int code) {
         switch (code) {
-            case 0: return "Clear";
-            case 1: case 2: case 3: return "Cloudy";
+            case 0: return "Cloudy";
+            case 1: case 2: case 3: return "Clear";
             case 45: case 48: return "Fog";
             case 51: case 53: case 55: return "Light Rain";
             case 61: case 63: case 65: return "Rain";
